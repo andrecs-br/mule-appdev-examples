@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
-	<flow name="syncDBaccountsWithPostal" doc:id="577b9096-847b-4b5a-9c67-6696bab71cb2" >
+	<flow name="syncDBaccountsWithPostal" doc:id="577b9096-847b-4b5a-9c67-6696bab71cb2" initialState="stopped">
 		<scheduler doc:name="Scheduler" doc:id="489b2f8c-feea-4ade-95be-0701df94f3ad" >
 			<scheduling-strategy >
 				<fixed-frequency frequency="10" timeUnit="SECONDS"/>
@@ -75,11 +75,23 @@ output application/csv header=false
 		<logger level="INFO" doc:name="payload" doc:id="63005643-363a-4c1a-8385-7de0ac8e8826" message="#[payload]"/>
 	</flow>
 	<flow name="getCSVaccounts" doc:id="45cf2a08-bb54-425a-a281-9495a38b1247" >
-		<file:listener doc:name="accountsCSV" doc:id="9d728fc6-795d-4471-817c-0b063006bedc" config-ref="File_Config" directory="input" watermarkMode="MODIFIED_TIMESTAMP" moveToDirectory="output" renameTo='#[attributes.fileName ++ ".backup"]'>
+		<file:listener doc:name="accountsCSV" doc:id="9d728fc6-795d-4471-817c-0b063006bedc" config-ref="File_Config" directory="input" watermarkMode="MODIFIED_TIMESTAMP" moveToDirectory="output">
 			<scheduling-strategy >
 				<fixed-frequency />
 			</scheduling-strategy>
 		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="23ca4dc4-534d-4be0-836b-386289fc64b6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="d68c1b7e-8281-4b5a-9c3a-bf0c95c3f02e" >
+			<set-payload value="processed" doc:name="processed" doc:id="02f1e6ee-a8ee-4ed8-a769-42a4f5e7b03f" />
+			<logger level="INFO" doc:name="payload" doc:id="703bb202-afb8-406f-98c9-0f84b871492e" message="#[payload]"/>
+		</foreach>
 		<logger level="INFO" doc:name="Logger" doc:id="fc954ba1-f434-4208-9315-ce04c7298c2a" message="#[payload]"/>
 	</flow>
 	<flow name="getSFDCaccounts" doc:id="3ad2db19-3341-4bcd-a9a7-c1c9f0ec4afc" >
